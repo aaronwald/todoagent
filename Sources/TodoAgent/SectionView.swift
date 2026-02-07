@@ -6,6 +6,7 @@ struct SectionView: View {
     let colorIndex: Int
     let depth: Int
     let changedItemKeys: Set<String>
+    var onAcknowledge: ((Set<String>) -> Void)?
 
     @Environment(AppState.self) private var appState: AppState?
     @State private var isExpanded: Bool = false
@@ -19,7 +20,14 @@ struct SectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Button(action: { withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() } }) {
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
+                if isExpanded, hasChangedDescendant {
+                    let fileBase = URL(fileURLWithPath: fileName).lastPathComponent
+                    let keys = Set(allItems(in: section).map { "\(fileBase):\($0.title)" })
+                    onAcknowledge?(keys)
+                }
+            }) {
                 HStack(spacing: 6) {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 10, weight: .bold))
@@ -32,6 +40,12 @@ struct SectionView: View {
 
                     Spacer()
 
+                    if hasChangedDescendant {
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 6))
+                            .foregroundColor(.orange)
+                    }
+
                     let stats = itemStats(section)
                     Text("\(stats.unchecked)/\(stats.total)")
                         .font(.system(size: 11))
@@ -41,11 +55,6 @@ struct SectionView: View {
                 .padding(.horizontal, 8)
             }
             .buttonStyle(.plain)
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(hasChangedDescendant && !isExpanded ? Color.accentColor : Color.clear, lineWidth: 2)
-                    .animation(.easeInOut(duration: 0.3).repeatCount(3, autoreverses: true), value: hasChangedDescendant)
-            )
 
             if isExpanded {
                 VStack(alignment: .leading, spacing: 1) {
@@ -66,7 +75,8 @@ struct SectionView: View {
                             fileName: fileName,
                             colorIndex: colorIndex,
                             depth: depth + 1,
-                            changedItemKeys: changedItemKeys
+                            changedItemKeys: changedItemKeys,
+                            onAcknowledge: onAcknowledge
                         )
                         .padding(.leading, 8)
                     }
@@ -81,6 +91,13 @@ struct SectionView: View {
         .onChange(of: appState?.collapseAllToggle) { _, _ in
             withAnimation(.easeInOut(duration: 0.2)) {
                 isExpanded = false
+            }
+        }
+        .onChange(of: hasChangedDescendant) { _, hasChanges in
+            if hasChanges {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded = true
+                }
             }
         }
     }

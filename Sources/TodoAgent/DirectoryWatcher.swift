@@ -10,12 +10,23 @@ final class DirectoryWatcher: ObservableObject {
     private var previousItems: [String: Bool] = [:]
     private nonisolated(unsafe) var eventStream: FSEventStreamRef?
 
+    private static let lastFileKey = "lastOpenedFile"
+
     func watch(file: URL) {
         stop()
         self.fileURL = file
+        UserDefaults.standard.set(file.path, forKey: Self.lastFileKey)
         scanFile()
-        // Watch the parent directory for changes to this file
         startFSEvents(for: file.deletingLastPathComponent())
+    }
+
+    func restoreLastFile() {
+        if let path = UserDefaults.standard.string(forKey: Self.lastFileKey) {
+            let url = URL(fileURLWithPath: path)
+            if FileManager.default.fileExists(atPath: path) {
+                watch(file: url)
+            }
+        }
     }
 
     func stop() {
@@ -53,12 +64,14 @@ final class DirectoryWatcher: ObservableObject {
         self.files = [file]
         self.previousItems = newItems
         if !changed.isEmpty {
-            self.changedItemKeys = changed
-            Task {
-                try? await Task.sleep(for: .seconds(2))
-                self.changedItemKeys = []
-            }
+            // Merge new changes with any unacknowledged ones
+            self.changedItemKeys = self.changedItemKeys.union(changed)
+            NSApp.requestUserAttention(.informationalRequest)
         }
+    }
+
+    func acknowledgeChanges(for keys: Set<String>) {
+        changedItemKeys.subtract(keys)
     }
 
     private func allItems(in sections: [TodoSection]) -> [TodoItem] {

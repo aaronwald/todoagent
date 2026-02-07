@@ -55,6 +55,9 @@ struct TodoAgentApp: App {
         Window("TodoAgent", id: "main") {
             MenuBarView(watcher: watcher)
                 .environment(appState)
+                .onAppear {
+                    watcher.restoreLastFile()
+                }
         }
         .windowStyle(.titleBar)
         .windowResizability(.contentMinSize)

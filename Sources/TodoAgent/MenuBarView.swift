@@ -48,7 +48,10 @@ struct MenuBarView: View {
                                     fileName: file.path,
                                     colorIndex: idx,
                                     depth: 0,
-                                    changedItemKeys: watcher.changedItemKeys
+                                    changedItemKeys: watcher.changedItemKeys,
+                                    onAcknowledge: { keys in
+                                        watcher.acknowledgeChanges(for: keys)
+                                    }
                                 )
                             }
                         }

@@ -13,7 +13,7 @@ struct TodoItemView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, weight: isFlashing ? .semibold : .regular))
                     .strikethrough(item.isCompleted)
                     .foregroundColor(item.isCompleted ? .secondary : .primary)
                     .lineLimit(2)
@@ -33,13 +33,26 @@ struct TodoItemView: View {
             }
 
             Spacer()
+
+            if isFlashing {
+                Text("changed")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.orange)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Color.orange.opacity(0.15))
+                    .cornerRadius(3)
+            }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 3)
         .padding(.horizontal, 6)
         .background(
             RoundedRectangle(cornerRadius: 4)
-                .stroke(isFlashing ? Color.accentColor : Color.clear, lineWidth: 2)
-                .animation(.easeInOut(duration: 0.3).repeatCount(3, autoreverses: true), value: isFlashing)
+                .fill(isFlashing ? Color.orange.opacity(0.12) : Color.clear)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(isFlashing ? Color.orange.opacity(0.5) : Color.clear, lineWidth: 1.5)
         )
         .textSelection(.enabled)
     }
