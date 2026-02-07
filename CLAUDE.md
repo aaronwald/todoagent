@@ -12,9 +12,10 @@ TodoAgent is a native macOS menu bar app that monitors a directory of markdown f
 swift build              # Debug build
 swift build -c release   # Release build
 swift test               # Run all tests (requires Xcode, not just Command Line Tools)
+./scripts/bundle.sh      # Build .app bundle (no Dock icon, no terminal)
 ```
 
-Run the app: `.build/release/TodoAgent`
+Run the app: `open TodoAgent.app` or `.build/release/TodoAgent`
 
 ## Architecture
 
