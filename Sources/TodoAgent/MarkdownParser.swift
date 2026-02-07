@@ -14,7 +14,8 @@ enum MarkdownParser {
                 let (level, heading) = headingMatch
                 while let last = stack.last, last.level >= level {
                     let popped = stack.removeLast()
-                    let section = buildSection(from: popped)
+                    let parentPath = stack.map(\.heading)
+                    let section = buildSection(from: popped, parentPath: parentPath)
                     if stack.isEmpty {
                         rootSections.append(section)
                     } else {
@@ -30,7 +31,8 @@ enum MarkdownParser {
         }
 
         while let popped = stack.popLast() {
-            let section = buildSection(from: popped)
+            let parentPath = stack.map(\.heading)
+            let section = buildSection(from: popped, parentPath: parentPath)
             if stack.isEmpty {
                 rootSections.append(section)
             } else {
@@ -71,7 +73,7 @@ enum MarkdownParser {
         let title = extractTitle(from: rest)
         let tags = extractTags(from: rest)
 
-        return TodoItem(title: title, isCompleted: isCompleted, line: lineNumber, tags: tags)
+        return TodoItem(id: title, title: title, isCompleted: isCompleted, line: lineNumber, tags: tags)
     }
 
     private static func extractTitle(from text: String) -> String {
@@ -106,11 +108,14 @@ enum MarkdownParser {
     }
 
     private static func buildSection(
-        from entry: (level: Int, heading: String, items: [TodoItem], subsections: [TodoSection])
+        from entry: (level: Int, heading: String, items: [TodoItem], subsections: [TodoSection]),
+        parentPath: [String]
     ) -> TodoSection {
         let allItems = entry.items + entry.subsections.flatMap { allItemsIn($0) }
-        let allCompleted = !allItems.isEmpty && allItems.allSatisfy(\.isCompleted)
+        let allCompleted = allItems.isEmpty || allItems.allSatisfy(\.isCompleted)
+        let idPath = (parentPath + [entry.heading]).joined(separator: "/")
         return TodoSection(
+            id: idPath,
             heading: entry.heading,
             level: entry.level,
             items: entry.items,

@@ -6,15 +6,16 @@ final class DirectoryWatcher: ObservableObject {
     @Published var files: [TodoFile] = []
     @Published var changedItemKeys: Set<String> = []
 
-    private var directoryURL: URL?
+    private var fileURL: URL?
     private var previousItems: [String: Bool] = [:]
     private nonisolated(unsafe) var eventStream: FSEventStreamRef?
 
-    func watch(directory: URL) {
+    func watch(file: URL) {
         stop()
-        self.directoryURL = directory
-        scanFiles()
-        startFSEvents(for: directory)
+        self.fileURL = file
+        scanFile()
+        // Watch the parent directory for changes to this file
+        startFSEvents(for: file.deletingLastPathComponent())
     }
 
     func stop() {
@@ -26,38 +27,30 @@ final class DirectoryWatcher: ObservableObject {
         }
     }
 
-    func scanFiles() {
-        guard let dir = directoryURL else { return }
-        let fm = FileManager.default
-        guard let contents = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return }
+    func scanFile() {
+        guard let fileURL = fileURL else { return }
+        guard let content = try? String(contentsOf: fileURL, encoding: .utf8) else { return }
 
-        let mdFiles = contents.filter { $0.pathExtension == "md" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
+        let sections = MarkdownParser.parse(content: content)
+        let file = TodoFile(id: fileURL.path, name: fileURL.lastPathComponent, path: fileURL.path, sections: sections)
 
-        var newFiles: [TodoFile] = []
         var newItems: [String: Bool] = [:]
         var changed: Set<String> = []
 
-        for fileURL in mdFiles {
-            guard let content = try? String(contentsOf: fileURL, encoding: .utf8) else { continue }
-            let sections = MarkdownParser.parse(content: content)
-            let file = TodoFile(name: fileURL.lastPathComponent, path: fileURL.path, sections: sections)
-            newFiles.append(file)
+        for item in allItems(in: sections) {
+            let key = "\(fileURL.lastPathComponent):\(item.title)"
+            newItems[key] = item.isCompleted
 
-            for item in allItems(in: sections) {
-                let key = "\(fileURL.lastPathComponent):\(item.title)"
-                newItems[key] = item.isCompleted
-
-                if let oldCompleted = previousItems[key] {
-                    if oldCompleted != item.isCompleted {
-                        changed.insert(key)
-                    }
-                } else if !previousItems.isEmpty {
+            if let oldCompleted = previousItems[key] {
+                if oldCompleted != item.isCompleted {
                     changed.insert(key)
                 }
+            } else if !previousItems.isEmpty {
+                changed.insert(key)
             }
         }
 
-        self.files = newFiles
+        self.files = [file]
         self.previousItems = newItems
         if !changed.isEmpty {
             self.changedItemKeys = changed
@@ -85,7 +78,7 @@ final class DirectoryWatcher: ObservableObject {
             guard let info = info else { return }
             let watcher = Unmanaged<DirectoryWatcher>.fromOpaque(info).takeUnretainedValue()
             Task { @MainActor in
-                watcher.scanFiles()
+                watcher.scanFile()
             }
         }
 

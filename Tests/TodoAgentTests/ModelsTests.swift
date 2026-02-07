@@ -2,7 +2,7 @@ import Testing
 @testable import TodoAgent
 
 @Test func todoItemCreation() {
-    let item = TodoItem(title: "Fix bug", isCompleted: false, line: 5, tags: ["ssmd"])
+    let item = TodoItem(id: "Fix bug", title: "Fix bug", isCompleted: false, line: 5, tags: ["ssmd"])
     #expect(item.title == "Fix bug")
     #expect(item.isCompleted == false)
     #expect(item.line == 5)
@@ -10,8 +10,9 @@ import Testing
 }
 
 @Test func todoSectionCreation() {
-    let item = TodoItem(title: "Task 1", isCompleted: false, line: 3, tags: [])
+    let item = TodoItem(id: "Task 1", title: "Task 1", isCompleted: false, line: 3, tags: [])
     let section = TodoSection(
+        id: "Active",
         heading: "Active",
         level: 3,
         items: [item],
@@ -25,6 +26,7 @@ import Testing
 
 @Test func todoFileCreation() {
     let file = TodoFile(
+        id: "/tmp/TODO.md",
         name: "TODO.md",
         path: "/tmp/TODO.md",
         sections: []

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var watcher: DirectoryWatcher
+    @Environment(AppState.self) private var appState: AppState?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,23 +15,21 @@ struct MenuBarView: View {
             Divider()
             bottomBar
         }
-        .frame(width: 380)
+        .frame(minWidth: 420, maxWidth: .infinity)
     }
 
     @ViewBuilder
     private var emptyState: some View {
         VStack(spacing: 12) {
-            Image(systemName: "folder.badge.questionmark")
+            Image(systemName: "doc.badge.questionmark")
                 .font(.system(size: 32))
                 .foregroundColor(.secondary)
-            Text("No directory selected")
-                .font(.system(size: 13))
+            Text("No file selected")
+                .font(.system(size: 14))
                 .foregroundColor(.secondary)
-            Button("Choose Folder...") {
-                chooseDirectory()
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.small)
+            Text("Use the menu bar icon to choose a file")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary.opacity(0.6))
         }
         .frame(maxWidth: .infinity, minHeight: 150)
         .padding()
@@ -43,14 +42,6 @@ struct MenuBarView: View {
                 ForEach(watcher.files) { file in
                     if !file.sections.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
-                            if watcher.files.count > 1 {
-                                Text(file.name)
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.secondary)
-                                    .padding(.horizontal, 8)
-                                    .padding(.top, 4)
-                            }
-
                             ForEach(Array(file.sections.enumerated()), id: \.element.id) { idx, section in
                                 SectionView(
                                     section: section,
@@ -66,22 +57,18 @@ struct MenuBarView: View {
             }
             .padding(8)
         }
-        .frame(maxHeight: 500)
+        .frame(minHeight: 200, maxHeight: .infinity)
     }
 
     @ViewBuilder
     private var bottomBar: some View {
         HStack {
-            Button(action: chooseDirectory) {
-                Image(systemName: "folder")
+            if let name = watcher.files.first?.name {
+                Image(systemName: "doc.text")
                     .font(.system(size: 11))
-            }
-            .buttonStyle(.plain)
-            .help("Choose folder...")
-
-            if let dir = watcher.files.first.map({ URL(fileURLWithPath: $0.path).deletingLastPathComponent().lastPathComponent }) {
-                Text(dir)
-                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                Text(name)
+                    .font(.system(size: 11))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
             }
@@ -90,43 +77,11 @@ struct MenuBarView: View {
 
             let totalUnchecked = watcher.files.flatMap(\.sections).flatMap { allItems(in: $0) }.filter { !$0.isCompleted }.count
             Text("\(totalUnchecked) remaining")
-                .font(.system(size: 10))
+                .font(.system(size: 11))
                 .foregroundColor(.secondary)
-
-            Button(action: { watcher.scanFiles() }) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 11))
-            }
-            .buttonStyle(.plain)
-            .help("Refresh")
-
-            Button(action: { NSApplication.shared.terminate(nil) }) {
-                Image(systemName: "xmark.circle")
-                    .font(.system(size: 11))
-            }
-            .buttonStyle(.plain)
-            .help("Quit")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-    }
-
-    private func chooseDirectory() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.allowsMultipleSelection = false
-        panel.message = "Select a directory containing markdown TODO files"
-        panel.level = .floating
-
-        // Activate app and bring panel to front so MenuBarExtra popover
-        // doesn't steal focus and dismiss the open panel
-        NSApp.activate(ignoringOtherApps: true)
-        panel.begin { response in
-            if response == .OK, let url = panel.url {
-                self.watcher.watch(directory: url)
-            }
-        }
     }
 
     private func allItems(in section: TodoSection) -> [TodoItem] {

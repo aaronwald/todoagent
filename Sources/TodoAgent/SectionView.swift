@@ -7,16 +7,8 @@ struct SectionView: View {
     let depth: Int
     let changedItemKeys: Set<String>
 
-    @State private var isExpanded: Bool
-
-    init(section: TodoSection, fileName: String, colorIndex: Int, depth: Int, changedItemKeys: Set<String>) {
-        self.section = section
-        self.fileName = fileName
-        self.colorIndex = colorIndex
-        self.depth = depth
-        self.changedItemKeys = changedItemKeys
-        self._isExpanded = State(initialValue: !section.allCompleted)
-    }
+    @Environment(AppState.self) private var appState: AppState?
+    @State private var isExpanded: Bool = false
 
     private var hasChangedDescendant: Bool {
         let fileBase = URL(fileURLWithPath: fileName).lastPathComponent
@@ -30,19 +22,19 @@ struct SectionView: View {
             Button(action: { withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() } }) {
                 HStack(spacing: 6) {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.secondary)
-                        .frame(width: 12)
+                        .frame(width: 14)
 
                     Text(section.heading)
-                        .font(.system(size: depth == 0 ? 13 : 12, weight: depth == 0 ? .semibold : .medium))
-                        .foregroundColor(.primary)
+                        .font(.system(size: depth == 0 ? 14 : 13, weight: depth == 0 ? .semibold : .medium))
+                        .foregroundColor(section.allCompleted ? .secondary : .primary)
 
                     Spacer()
 
                     let stats = itemStats(section)
                     Text("\(stats.unchecked)/\(stats.total)")
-                        .font(.system(size: 10))
+                        .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
                 .padding(.vertical, 4)
@@ -83,9 +75,14 @@ struct SectionView: View {
         }
         .background(
             PastelTheme.color(for: colorIndex)
-                .opacity(depth == 0 ? 0.15 : 0.08)
+                .opacity(section.allCompleted ? 0.05 : (depth == 0 ? 0.15 : 0.08))
         )
         .cornerRadius(depth == 0 ? 6 : 4)
+        .onChange(of: appState?.collapseAllToggle) { _, _ in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isExpanded = false
+            }
+        }
     }
 
     private func itemStats(_ section: TodoSection) -> (unchecked: Int, total: Int) {

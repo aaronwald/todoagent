@@ -1,7 +1,7 @@
 import Foundation
 
 struct TodoItem: Identifiable, Equatable, Sendable {
-    let id = UUID()
+    let id: String  // stable: "title"
     let title: String
     let isCompleted: Bool
     let line: Int
@@ -13,7 +13,7 @@ struct TodoItem: Identifiable, Equatable, Sendable {
 }
 
 struct TodoSection: Identifiable, Sendable {
-    let id = UUID()
+    let id: String  // stable: "level:heading" path
     let heading: String
     let level: Int
     let items: [TodoItem]
@@ -22,7 +22,7 @@ struct TodoSection: Identifiable, Sendable {
 }
 
 struct TodoFile: Identifiable, Sendable {
-    let id = UUID()
+    let id: String  // stable: file path
     let name: String
     let path: String
     let sections: [TodoSection]
