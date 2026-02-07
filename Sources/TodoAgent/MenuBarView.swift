@@ -117,9 +117,15 @@ struct MenuBarView: View {
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
         panel.message = "Select a directory containing markdown TODO files"
+        panel.level = .floating
 
-        if panel.runModal() == .OK, let url = panel.url {
-            watcher.watch(directory: url)
+        // Activate app and bring panel to front so MenuBarExtra popover
+        // doesn't steal focus and dismiss the open panel
+        NSApp.activate(ignoringOtherApps: true)
+        panel.begin { response in
+            if response == .OK, let url = panel.url {
+                self.watcher.watch(directory: url)
+            }
         }
     }
 
