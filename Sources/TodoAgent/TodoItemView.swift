@@ -17,6 +17,7 @@ struct TodoItemView: View {
                 .strikethrough(item.isCompleted)
                 .foregroundColor(item.isCompleted ? .secondary : .primary)
                 .lineLimit(2)
+                .help(item.details.isEmpty ? "" : item.details.joined(separator: "\n"))
 
             ForEach(item.tags, id: \.self) { tag in
                 Text(tag)

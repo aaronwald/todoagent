@@ -1,7 +1,15 @@
 import SwiftUI
 
+class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Activate app so the Window scene becomes visible on startup
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
 @main
 struct TodoAgentApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var watcher = DirectoryWatcher()
     @State private var appState = AppState()
     @Environment(\.openWindow) private var openWindow

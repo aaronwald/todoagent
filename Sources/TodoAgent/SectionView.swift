@@ -55,6 +55,7 @@ struct SectionView: View {
                 .padding(.horizontal, 8)
             }
             .buttonStyle(.plain)
+            .help(isExpanded ? "" : tooltipText(for: section))
 
             if isExpanded {
                 VStack(alignment: .leading, spacing: 1) {
@@ -114,5 +115,14 @@ struct SectionView: View {
 
     private func allItems(in section: TodoSection) -> [TodoItem] {
         section.items + section.subsections.flatMap { allItems(in: $0) }
+    }
+
+    private func tooltipText(for section: TodoSection) -> String {
+        let items = allItems(in: section)
+        if items.isEmpty { return "" }
+        let lines = items.map { item in
+            "\(item.isCompleted ? "\u{2611}" : "\u{2610}") \(item.title)"
+        }
+        return lines.joined(separator: "\n")
     }
 }

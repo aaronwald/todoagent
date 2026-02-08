@@ -5,12 +5,16 @@ enum MarkdownParser {
         let lines = content.components(separatedBy: "\n")
         var rootSections: [TodoSection] = []
         var stack: [(level: Int, heading: String, items: [TodoItem], subsections: [TodoSection])] = []
+        var pendingDetails: [String] = []
 
         for (index, rawLine) in lines.enumerated() {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             let lineNumber = index + 1
 
             if let headingMatch = parseHeading(line) {
+                // Flush pending details to last item
+                flushDetails(&pendingDetails, into: &stack)
+
                 let (level, heading) = headingMatch
                 while let last = stack.last, last.level >= level {
                     let popped = stack.removeLast()
@@ -24,11 +28,20 @@ enum MarkdownParser {
                 }
                 stack.append((level: level, heading: heading, items: [], subsections: []))
             } else if let item = parseCheckbox(line, lineNumber: lineNumber) {
+                // Flush pending details to previous item before starting a new one
+                flushDetails(&pendingDetails, into: &stack)
                 if !stack.isEmpty {
                     stack[stack.count - 1].items.append(item)
                 }
+            } else if !line.isEmpty, !stack.isEmpty, let last = stack.last, !last.items.isEmpty {
+                // Non-empty line after a checkbox — collect as detail
+                let detail = rawLine.trimmingCharacters(in: .whitespaces)
+                    .replacingOccurrences(of: "^- ", with: "", options: .regularExpression)
+                pendingDetails.append(detail)
             }
         }
+
+        flushDetails(&pendingDetails, into: &stack)
 
         while let popped = stack.popLast() {
             let parentPath = stack.map(\.heading)
@@ -73,7 +86,7 @@ enum MarkdownParser {
         let title = extractTitle(from: rest)
         let tags = extractTags(from: rest)
 
-        return TodoItem(id: title, title: title, isCompleted: isCompleted, line: lineNumber, tags: tags)
+        return TodoItem(id: title, title: title, isCompleted: isCompleted, line: lineNumber, tags: tags, details: [])
     }
 
     private static func extractTitle(from text: String) -> String {
@@ -122,6 +135,28 @@ enum MarkdownParser {
             subsections: entry.subsections,
             allCompleted: allCompleted
         )
+    }
+
+    private static func flushDetails(
+        _ details: inout [String],
+        into stack: inout [(level: Int, heading: String, items: [TodoItem], subsections: [TodoSection])]
+    ) {
+        guard !details.isEmpty, !stack.isEmpty else {
+            details.removeAll()
+            return
+        }
+        let idx = stack.count - 1
+        guard !stack[idx].items.isEmpty else {
+            details.removeAll()
+            return
+        }
+        let lastIdx = stack[idx].items.count - 1
+        let old = stack[idx].items[lastIdx]
+        stack[idx].items[lastIdx] = TodoItem(
+            id: old.id, title: old.title, isCompleted: old.isCompleted,
+            line: old.line, tags: old.tags, details: details
+        )
+        details.removeAll()
     }
 
     private static func allItemsIn(_ section: TodoSection) -> [TodoItem] {

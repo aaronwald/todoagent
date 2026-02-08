@@ -6,6 +6,7 @@ struct TodoItem: Identifiable, Equatable, Sendable {
     let isCompleted: Bool
     let line: Int
     let tags: [String]
+    let details: [String]
 
     static func == (lhs: TodoItem, rhs: TodoItem) -> Bool {
         lhs.title == rhs.title && lhs.isCompleted == rhs.isCompleted && lhs.line == rhs.line
