@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct TodoAgentApp: App {
     @StateObject private var watcher = DirectoryWatcher()
+    @StateObject private var usage = ClaudeUsageWatcher()
     @State private var appState = AppState()
     @State private var hasLaunched = false
     @Environment(\.openWindow) private var openWindow
@@ -34,6 +35,11 @@ struct TodoAgentApp: App {
 
             Divider()
 
+            Button("About TodoAgent") {
+                openWindow(id: "about")
+                NSApp.activate(ignoringOtherApps: true)
+            }
+
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }
@@ -60,7 +66,7 @@ struct TodoAgentApp: App {
         }
 
         Window("TodoAgent", id: "main") {
-            MenuBarView(watcher: watcher)
+            MenuBarView(watcher: watcher, usage: usage)
                 .environment(appState)
                 .onAppear {
                     watcher.restoreLastFile()
@@ -69,6 +75,13 @@ struct TodoAgentApp: App {
         .windowStyle(.titleBar)
         .windowResizability(.contentMinSize)
         .defaultPosition(.topTrailing)
+
+        Window("About TodoAgent", id: "about") {
+            AboutView()
+        }
+        .windowStyle(.titleBar)
+        .windowResizability(.contentSize)
+        .defaultSize(width: 300, height: 200)
     }
 
     private func allItems(in section: TodoSection) -> [TodoItem] {

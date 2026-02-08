@@ -2,10 +2,14 @@ import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var watcher: DirectoryWatcher
+    @ObservedObject var usage: ClaudeUsageWatcher
     @Environment(AppState.self) private var appState: AppState?
 
     var body: some View {
         VStack(spacing: 0) {
+            UsageBarView(usage: usage)
+            Divider()
+
             if watcher.files.isEmpty {
                 emptyState
             } else {
