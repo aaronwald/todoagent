@@ -64,7 +64,10 @@ struct SectionView: View {
                         TodoItemView(
                             item: item,
                             fileName: fileName,
-                            isFlashing: changedItemKeys.contains(key)
+                            isFlashing: changedItemKeys.contains(key),
+                            onAcknowledge: {
+                                onAcknowledge?(Set([key]))
+                            }
                         )
                         .padding(.leading, CGFloat(depth) * 8 + 16)
                     }
@@ -85,7 +88,7 @@ struct SectionView: View {
         }
         .background(
             PastelTheme.color(for: colorIndex)
-                .opacity(section.allCompleted ? 0.05 : (depth == 0 ? 0.15 : 0.08))
+                .opacity(section.allCompleted ? 0.10 : (depth == 0 ? 0.30 : 0.18))
         )
         .cornerRadius(depth == 0 ? 6 : 4)
         .onChange(of: appState?.collapseAllToggle) { _, _ in

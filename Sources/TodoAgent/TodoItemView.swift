@@ -4,6 +4,7 @@ struct TodoItemView: View {
     let item: TodoItem
     let fileName: String
     let isFlashing: Bool
+    var onAcknowledge: (() -> Void)?
 
     var body: some View {
         HStack(alignment: .top, spacing: 6) {
@@ -49,5 +50,10 @@ struct TodoItemView: View {
                 .stroke(isFlashing ? Color.orange.opacity(0.5) : Color.clear, lineWidth: 1.5)
         )
         .textSelection(.enabled)
+        .onTapGesture(count: 2) {
+            if isFlashing {
+                onAcknowledge?()
+            }
+        }
     }
 }
