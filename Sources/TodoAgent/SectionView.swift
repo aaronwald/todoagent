@@ -6,15 +6,16 @@ struct SectionView: View {
     let colorIndex: Int
     let depth: Int
     let changedItemKeys: Set<String>
+    let itemChangeKeys: [String: String]
     var onAcknowledge: ((Set<String>) -> Void)?
 
     @Environment(AppState.self) private var appState: AppState?
     @State private var isExpanded: Bool = false
 
     private var hasChangedDescendant: Bool {
-        let fileBase = URL(fileURLWithPath: fileName).lastPathComponent
-        return allItems(in: section).contains { item in
-            changedItemKeys.contains("\(fileBase):\(item.line):\(item.title)")
+        allItems(in: section).contains { item in
+            guard let key = itemChangeKeys[item.id] else { return false }
+            return changedItemKeys.contains(key)
         }
     }
 
@@ -23,8 +24,7 @@ struct SectionView: View {
             Button(action: {
                 withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
                 if isExpanded, hasChangedDescendant {
-                    let fileBase = URL(fileURLWithPath: fileName).lastPathComponent
-                    let keys = Set(allItems(in: section).map { "\(fileBase):\($0.line):\($0.title)" })
+                    let keys = Set(allItems(in: section).compactMap { itemChangeKeys[$0.id] })
                     onAcknowledge?(keys)
                 }
             }) {
@@ -60,8 +60,7 @@ struct SectionView: View {
             if isExpanded {
                 VStack(alignment: .leading, spacing: 1) {
                     ForEach(section.items) { item in
-                        let fileBase = URL(fileURLWithPath: fileName).lastPathComponent
-                        let key = "\(fileBase):\(item.line):\(item.title)"
+                        let key = itemChangeKeys[item.id] ?? ""
                         TodoItemView(
                             item: item,
                             fileName: fileName,
@@ -80,6 +79,7 @@ struct SectionView: View {
                             colorIndex: colorIndex,
                             depth: depth + 1,
                             changedItemKeys: changedItemKeys,
+                            itemChangeKeys: itemChangeKeys,
                             onAcknowledge: onAcknowledge
                         )
                         .padding(.leading, 8)

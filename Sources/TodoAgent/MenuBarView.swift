@@ -53,6 +53,7 @@ struct MenuBarView: View {
                                     colorIndex: idx,
                                     depth: 0,
                                     changedItemKeys: watcher.changedItemKeys,
+                                    itemChangeKeys: watcher.itemChangeKeys,
                                     onAcknowledge: { keys in
                                         watcher.acknowledgeChanges(for: keys)
                                     }

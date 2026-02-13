@@ -5,6 +5,7 @@ import SwiftUI
 final class DirectoryWatcher: ObservableObject {
     @Published var files: [TodoFile] = []
     @Published var changedItemKeys: Set<String> = []
+    @Published var itemChangeKeys: [String: String] = [:]  // item.id -> change tracking key
 
     private var fileURL: URL?
     private var previousItems: [String: Bool] = [:]
@@ -47,9 +48,16 @@ final class DirectoryWatcher: ObservableObject {
 
         var newItems: [String: Bool] = [:]
         var changed: Set<String> = []
+        var titleCounts: [String: Int] = [:]
+        var newItemChangeKeys: [String: String] = [:]
 
         for item in allItems(in: sections) {
-            let key = "\(fileURL.lastPathComponent):\(item.line):\(item.title)"
+            let base = "\(fileURL.lastPathComponent):\(item.title)"
+            let occ = titleCounts[base, default: 0]
+            titleCounts[base] = occ + 1
+            let key = "\(base)#\(occ)"
+
+            newItemChangeKeys[item.id] = key
             newItems[key] = item.isCompleted
 
             if let oldCompleted = previousItems[key] {
@@ -63,6 +71,7 @@ final class DirectoryWatcher: ObservableObject {
 
         self.files = [file]
         self.previousItems = newItems
+        self.itemChangeKeys = newItemChangeKeys
         if !changed.isEmpty {
             // Merge new changes with any unacknowledged ones
             self.changedItemKeys = self.changedItemKeys.union(changed)
