@@ -86,7 +86,7 @@ enum MarkdownParser {
         let title = extractTitle(from: rest)
         let tags = extractTags(from: rest)
 
-        return TodoItem(id: title, title: title, isCompleted: isCompleted, line: lineNumber, tags: tags, details: [])
+        return TodoItem(id: "\(lineNumber):\(title)", title: title, isCompleted: isCompleted, line: lineNumber, tags: tags, details: [])
     }
 
     private static func extractTitle(from text: String) -> String {

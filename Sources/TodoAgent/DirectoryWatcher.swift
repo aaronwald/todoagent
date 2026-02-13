@@ -49,7 +49,7 @@ final class DirectoryWatcher: ObservableObject {
         var changed: Set<String> = []
 
         for item in allItems(in: sections) {
-            let key = "\(fileURL.lastPathComponent):\(item.title)"
+            let key = "\(fileURL.lastPathComponent):\(item.line):\(item.title)"
             newItems[key] = item.isCompleted
 
             if let oldCompleted = previousItems[key] {

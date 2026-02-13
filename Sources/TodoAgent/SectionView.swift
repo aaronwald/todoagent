@@ -14,7 +14,7 @@ struct SectionView: View {
     private var hasChangedDescendant: Bool {
         let fileBase = URL(fileURLWithPath: fileName).lastPathComponent
         return allItems(in: section).contains { item in
-            changedItemKeys.contains("\(fileBase):\(item.title)")
+            changedItemKeys.contains("\(fileBase):\(item.line):\(item.title)")
         }
     }
 
@@ -24,7 +24,7 @@ struct SectionView: View {
                 withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
                 if isExpanded, hasChangedDescendant {
                     let fileBase = URL(fileURLWithPath: fileName).lastPathComponent
-                    let keys = Set(allItems(in: section).map { "\(fileBase):\($0.title)" })
+                    let keys = Set(allItems(in: section).map { "\(fileBase):\($0.line):\($0.title)" })
                     onAcknowledge?(keys)
                 }
             }) {
@@ -61,7 +61,7 @@ struct SectionView: View {
                 VStack(alignment: .leading, spacing: 1) {
                     ForEach(section.items) { item in
                         let fileBase = URL(fileURLWithPath: fileName).lastPathComponent
-                        let key = "\(fileBase):\(item.title)"
+                        let key = "\(fileBase):\(item.line):\(item.title)"
                         TodoItemView(
                             item: item,
                             fileName: fileName,
