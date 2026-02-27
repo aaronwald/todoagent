@@ -72,6 +72,15 @@ func setDefaultCollapsed(sections []TodoSection, prefix string, collapsed map[st
 	}
 }
 
+// collapseAll recursively marks every section as collapsed.
+func collapseAll(sections []TodoSection, prefix string, collapsed map[string]bool) {
+	for _, s := range sections {
+		key := sectionKey(prefix, s.Heading)
+		collapsed[key] = true
+		collapseAll(s.Subsections, key, collapsed)
+	}
+}
+
 // sectionKey builds a unique path key for collapse tracking.
 func sectionKey(prefix, heading string) string {
 	if prefix == "" {
@@ -192,6 +201,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.clampCursor()
 				m.ensureVisible()
 			}
+
+		case "c":
+			// Collapse all sections
+			m.collapsed = make(map[string]bool)
+			collapseAll(m.sections, "", m.collapsed)
+			m.nodes = flatten(m.sections, m.collapsed)
+			m.clampCursor()
+			m.ensureVisible()
+
+		case "e":
+			// Expand all sections
+			m.collapsed = make(map[string]bool)
+			m.nodes = flatten(m.sections, m.collapsed)
+			m.ensureVisible()
 
 		case "r":
 			sections, err := ReadAndParse(m.filePath)
