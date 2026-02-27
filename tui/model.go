@@ -369,6 +369,9 @@ func (m model) renderNode(n node, selected bool) string {
 		headingStyle := lipgloss.NewStyle().
 			Bold(true).
 			Foreground(color)
+		if n.section.AllCompleted {
+			headingStyle = headingStyle.Strikethrough(true).Faint(true)
+		}
 		badgeStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#888888"))
 
