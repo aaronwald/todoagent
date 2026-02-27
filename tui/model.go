@@ -144,6 +144,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.ensureVisible()
 
+		case "pgup":
+			m.cursor = max(m.cursor-m.contentHeight(), 0)
+			m.ensureVisible()
+
+		case "pgdown":
+			m.cursor = min(m.cursor+m.contentHeight(), len(m.nodes)-1)
+			m.ensureVisible()
+
+		case "home":
+			m.cursor = 0
+			m.ensureVisible()
+
+		case "end":
+			m.cursor = max(len(m.nodes)-1, 0)
+			m.ensureVisible()
+
 		case "left", "h":
 			// Collapse: if on a section, collapse it; if on an item, collapse parent section
 			key := m.currentSectionKey()
