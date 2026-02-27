@@ -30,6 +30,9 @@ func ReadAndParse(path string) ([]TodoSection, error) {
 
 // WatchFile returns a tea.Cmd that watches a file for changes and sends
 // FileUpdatedMsg or FileErrorMsg when the file is modified.
+// The watcher is closed after delivering a single message to avoid leaking
+// goroutines and file descriptors. The caller should re-invoke WatchFile
+// to continue watching.
 func WatchFile(path string) tea.Cmd {
 	return func() tea.Msg {
 		watcher, err := fsnotify.NewWatcher()
@@ -42,11 +45,12 @@ func WatchFile(path string) tea.Cmd {
 			return FileErrorMsg{Err: err}
 		}
 
-		// Debounce: wait for events to settle
-		var timer *time.Timer
 		done := make(chan tea.Msg, 1)
 
 		go func() {
+			defer watcher.Close()
+
+			var timer *time.Timer
 			for {
 				select {
 				case event, ok := <-watcher.Events:
@@ -76,6 +80,9 @@ func WatchFile(path string) tea.Cmd {
 			}
 		}()
 
-		return <-done
+		msg := <-done
+		// Closing the watcher stops the goroutine via the !ok paths
+		watcher.Close()
+		return msg
 	}
 }

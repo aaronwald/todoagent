@@ -215,21 +215,12 @@ func (m model) currentSectionKey() string {
 
 // clampCursor ensures cursor is within valid range.
 func (m *model) clampCursor() {
-	if m.cursor >= len(m.nodes) {
-		m.cursor = len(m.nodes) - 1
-	}
-	if m.cursor < 0 {
-		m.cursor = 0
-	}
+	m.cursor = max(min(m.cursor, len(m.nodes)-1), 0)
 }
 
 // contentHeight returns the number of visible content lines (between header and footer).
 func (m model) contentHeight() int {
-	h := m.height - 2 // header + footer
-	if h < 1 {
-		h = 1
-	}
-	return h
+	return max(m.height-2, 1) // header + footer
 }
 
 // ensureVisible adjusts scroll so the cursor is within the visible viewport.
@@ -270,10 +261,7 @@ func (m model) View() string {
 
 	// Content area
 	ch := m.contentHeight()
-	endIdx := m.scroll + ch
-	if endIdx > len(m.nodes) {
-		endIdx = len(m.nodes)
-	}
+	endIdx := min(m.scroll+ch, len(m.nodes))
 
 	linesRendered := 0
 	for i := m.scroll; i < endIdx; i++ {
@@ -293,10 +281,7 @@ func (m model) View() string {
 	done, total := m.countStats()
 	footerLeft := fmt.Sprintf(" %d/%d done", done, total)
 	footerRight := " q:quit  j/k:nav  h/l:fold  r:refresh "
-	gap := m.width - lipgloss.Width(footerLeft) - lipgloss.Width(footerRight)
-	if gap < 0 {
-		gap = 0
-	}
+	gap := max(m.width-lipgloss.Width(footerLeft)-lipgloss.Width(footerRight), 0)
 	footerText := footerLeft + strings.Repeat(" ", gap) + footerRight
 
 	footerStyle := lipgloss.NewStyle().
@@ -310,10 +295,7 @@ func (m model) View() string {
 
 // renderNode renders a single node line.
 func (m model) renderNode(n node, selected bool) string {
-	w := m.width
-	if w < 10 {
-		w = 10
-	}
+	w := max(m.width, 10)
 
 	color := pastelColors[n.colorIdx%len(pastelColors)]
 	indent := strings.Repeat("  ", n.depth)
