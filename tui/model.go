@@ -163,6 +163,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ensureVisible()
 			}
 
+		case " ", "enter":
+			// Toggle collapse/expand on sections
+			if m.cursor < len(m.nodes) && m.nodes[m.cursor].isSection {
+				key := m.nodes[m.cursor].key
+				if m.collapsed[key] {
+					delete(m.collapsed, key)
+				} else {
+					m.collapsed[key] = true
+				}
+				m.nodes = flatten(m.sections, m.collapsed)
+				m.clampCursor()
+				m.ensureVisible()
+			}
+
 		case "r":
 			sections, err := ReadAndParse(m.filePath)
 			if err != nil {
@@ -280,7 +294,7 @@ func (m model) View() string {
 	// Footer
 	done, total := m.countStats()
 	footerLeft := fmt.Sprintf(" %d/%d done", done, total)
-	footerRight := " q:quit  j/k:nav  h/l:fold  r:refresh "
+	footerRight := " q:quit  j/k:nav  space:fold  r:refresh "
 	gap := max(m.width-lipgloss.Width(footerLeft)-lipgloss.Width(footerRight), 0)
 	footerText := footerLeft + strings.Repeat(" ", gap) + footerRight
 
