@@ -262,6 +262,43 @@ func TestParseRealWorldTodo(t *testing.T) {
 	}
 }
 
+func TestParseDetails(t *testing.T) {
+	markdown := "## Section\n- [ ] Task with details\n  Some detail line\n  Another detail"
+	sections := Parse(markdown)
+
+	if len(sections[0].Items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(sections[0].Items))
+	}
+	item := sections[0].Items[0]
+	if len(item.Details) != 2 {
+		t.Fatalf("expected 2 details, got %d", len(item.Details))
+	}
+	if item.Details[0] != "Some detail line" {
+		t.Errorf("detail[0] = %q, want %q", item.Details[0], "Some detail line")
+	}
+	if item.Details[1] != "Another detail" {
+		t.Errorf("detail[1] = %q, want %q", item.Details[1], "Another detail")
+	}
+}
+
+func TestParseDetailsFlushOnNewCheckbox(t *testing.T) {
+	markdown := "## Section\n- [ ] First task\n  Detail for first\n- [ ] Second task"
+	sections := Parse(markdown)
+
+	if len(sections[0].Items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(sections[0].Items))
+	}
+	if len(sections[0].Items[0].Details) != 1 {
+		t.Errorf("expected 1 detail on first item, got %d", len(sections[0].Items[0].Details))
+	}
+	if sections[0].Items[0].Details[0] != "Detail for first" {
+		t.Errorf("detail = %q", sections[0].Items[0].Details[0])
+	}
+	if len(sections[0].Items[1].Details) != 0 {
+		t.Errorf("expected 0 details on second item, got %d", len(sections[0].Items[1].Details))
+	}
+}
+
 func TestItemCountAcrossNesting(t *testing.T) {
 	markdown := `## Root
 - [ ] Root item
