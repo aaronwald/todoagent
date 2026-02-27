@@ -364,12 +364,12 @@ func (m model) renderNode(n node, selected bool) string {
 	if selected {
 		cursorStyle := lipgloss.NewStyle().
 			Background(lipgloss.Color("#3A3A3A")).
-			Width(w)
+			MaxWidth(w)
 		return cursorStyle.Render(">" + line)
 	}
 
-	// Pad to full width
-	padStyle := lipgloss.NewStyle().Width(w)
+	// Truncate to terminal width, no wrapping
+	padStyle := lipgloss.NewStyle().MaxWidth(w)
 	return padStyle.Render(" " + line)
 }
 
