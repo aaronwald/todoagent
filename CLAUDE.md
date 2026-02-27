@@ -17,6 +17,16 @@ swift test               # Run all tests (requires Xcode, not just Command Line 
 
 Run the app: `open TodoAgent.app` or `.build/release/TodoAgent`
 
+## TUI Mode
+
+A Go-based terminal UI lives in `tui/`. Watches a single markdown file and renders todos in the terminal — designed for cmux panes.
+
+```bash
+cd tui && go build -o todoagent-tui .    # Build TUI binary
+cd tui && go test -v ./...                # Run TUI tests
+./tui/todoagent-tui <file.md>            # Run TUI on a markdown file
+```
+
 ## Architecture
 
 - **Models.swift** — `TodoItem`, `TodoSection`, `TodoFile` data types
@@ -27,6 +37,14 @@ Run the app: `open TodoAgent.app` or `.build/release/TodoAgent`
 - **TodoItemView.swift** — Single checkbox item row with tags, click opens file in default editor
 - **MenuBarView.swift** — Main popover: folder picker, scrollable section list, bottom bar with stats
 - **TodoAgentApp.swift** — `@main` entry point, `MenuBarExtra` with `.window` style, badge count in menu bar
+
+### TUI (`tui/`)
+
+- **parser.go** — Port of Swift MarkdownParser to Go, same heading/checkbox/tag extraction
+- **parser_test.go** — 12 tests ported from Swift test suite
+- **watcher.go** — fsnotify file watcher with 100ms debounce, delivers Bubble Tea messages
+- **model.go** — Bubble Tea model with pastel theme, cursor navigation, section collapse/expand
+- **main.go** — CLI entry point, arg parsing, alt screen
 
 ## Key Design Decisions
 
